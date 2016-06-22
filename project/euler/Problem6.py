@@ -16,7 +16,11 @@ def main():
     # execute only if run as a script
     print("Running Brute Force")
     print(bruteForce(100))
+    print(timeit.repeat("bruteForce100()", "from __main__ import bruteForce100", number =100))
 
+
+def bruteForce100():
+    bruteForce(100)
 
 
 def bruteForce(n):
