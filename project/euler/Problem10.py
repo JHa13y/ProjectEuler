@@ -2,7 +2,7 @@
 
 #Find the sum of all the primes below two million.
 import timeit
-import project.euler.common.prime
+import project.euler.common.prime as prime
 
 def main():
     print("Calling on 10: " + str(sum_of_primes(10)))
@@ -25,7 +25,7 @@ def sum_of_primes(n):
 def better_sum_of_primes(n):
     sum =0
     for i in range (2, n):
-        if prime.isPrime(i):
+        if prime.is_prime(i):
             sum = sum + i
     print(sum)
     return sum

@@ -2,6 +2,7 @@
 
 def is_prime(n):
     """
+    Problem10 compares this method to the super naive method.  Yields a 5x speedup.
     :param n: The number being checked
     :return: True if n is prime, false otherwise
     """
