@@ -18,12 +18,18 @@ How many, not necessarily distinct, values of  nCr, for 1 ≤ n ≤ 100, are gre
 
 
 """
-
+import timeit
 import math
+import numpy
 
 def main():
     print("Running bruteforce:");
     print("There are " + str(bruteforce()) +" combinations greater than 1M")
+    print(timeit.timeit("bruteforce()", "from __main__ import bruteforce", number=10))
+    print("Running smarter():");
+    print("There are " + str(smarter()) +" combinations greater than 1M")
+    print(timeit.timeit("smarter()", "from __main__ import smarter", number=10))
+
 
 def bruteforce():
     count =0;
@@ -31,6 +37,20 @@ def bruteforce():
         for r in range(1, n+1):
             combo = math.factorial(n) / (math.factorial(r) * math.factorial(n-r))
             if combo >= 1000000:
+                count += 1
+    return count
+
+#Do a dynamic approach!
+def smarter():
+    count =0
+    memoize = numpy.zeros((100, 100))
+    for n in range(0, 100):
+        for r in range(0, n+1):
+            if r == n:
+                memoize[n][r] = 1
+            else:
+                memoize[n][r] = memoize[n-1][r] *  (n+1) / (n -r)
+            if memoize[n][r]  > 1000000:
                 count += 1
     return count
 
