@@ -33,46 +33,157 @@ def main():
     print("Timing new BruteForce Method:")
     print(timeit.repeat("bruteForce()", "from __main__ import bruteForce", number =1))
 
+    print("Timing memoize Method:")
+    print(timeit.repeat("memoized()", "from __main__ import memoized", number = 1))
+
 
 def bruteForce():
+    mults = 0;
     max =0;
-    print("Check Horizontals")
+    #print("Check Horizontals")
     for i in range(0, 20):
         for j in range (0, 17):
-            print("Trying: " +grid[i][j] + " "+ grid[i][j+1] + " " + grid[i][j+2] +" " + grid[i][j+3])
+            #print("Trying: " +grid[i][j] + " "+ grid[i][j+1] + " " + grid[i][j+2] +" " + grid[i][j+3])
             value = int(grid[i][j]) * int(grid[i][j+1]) * int(grid[i][j+2]) * int(grid[i][j+3])
+            mults += 3
             if value > max:
                 max = value
 
-    print("Check Verticles")
+    #print("Check Verticles")
     for i in range(0, 17):
         for j in range (0, 20):
-            print("Trying: " +grid[i][j] + " "+ grid[i+1][j] + " " + grid[i+2][j] +" " + grid[i+3][j])
+            #print("Trying: " +grid[i][j] + " "+ grid[i+1][j] + " " + grid[i+2][j] +" " + grid[i+3][j])
             value = int(grid[i][j]) * int(grid[i+1][j]) * int(grid[i+2][j]) * int(grid[i+3][j])
+            mults += 3
             if value > max:
                 max = value
 
-    print("Check Diagonal Up")
+    #print("Check Diagonal Up")
     for i in range(3, 17):
         for j in range(0, 17):
-            print("Trying: " +grid[i][j] + " "+ grid[i-1][j+1] + " " + grid[i-2][j+2] +" " + grid[i-3][j+3])
+            #print("Trying: " +grid[i][j] + " "+ grid[i-1][j+1] + " " + grid[i-2][j+2] +" " + grid[i-3][j+3])
             value = int(grid[i][j]) * int(grid[i-1][j+1]) * int(grid[i-2][j+2]) * int(grid[i-3][j+3])
+            mults += 3
             if value > max:
                 max = value
 
-    print("Check Diagonal Down")
+    #print("Check Diagonal Down")
     for i in range(0, 17):
         for j in range(0, 17):
-            print("Trying: " +grid[i][j] + " "+ grid[i+1][j+1] + " " + grid[i+2][j+2] +" " + grid[i+3][j+3])
+            #print("Trying: " +grid[i][j] + " "+ grid[i+1][j+1] + " " + grid[i+2][j+2] +" " + grid[i+3][j+3])
             value = int(grid[i][j]) * int(grid[i+1][j+1]) * int(grid[i+2][j+2]) * int(grid[i+3][j+3])
+            mults += 3
             if value > max:
                 max = value
 
     print("Max Product:" + str(max))
+    print("Took this many multiplication operations:" + str(mults))
+    print("")
+
+#Note:  Treating this as i = y, j = x....
+def memoized():
+    #Initalize m table
+    m =[[0]*20 for i in range(20)]
+
+    maxVal =0
+    numOpts=0
+
+    for i in range (0,20):
+        for j in range(0,20):
+            mEntry  ={}
+            currLoc = int(grid[i][j])
+            
+            # if currLoc < 0:
+            #     mEntry['zv'] += 1
+            #     mEntry['zh'] += 1
+            #     mEntry['zdb'] += 1
+            #     mEntry['zdf'] += 1
+
+            #vertical case
+            if i == 0:
+                mEntry['v'] = currLoc
+            elif i >= 3: #Vertical Exists
+                win_front = int(grid[i-3][j])
+                #mEntry['zv'] += m[i-1][j]['zv']
+                val = currLoc * m[i-1][j]['v']
+                if val > maxVal: # and mEntry['zv'] == 0:
+                    maxVal = val
+                mEntry['v'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zv'] -= 1
+                numOpts += 2
+            else:
+                #mEntry['zv'] += m[i - 1][j]['zv']
+                mEntry['v'] = m[i-1][j]['v'] * currLoc
+                numOpts +=1
+
+            #horizontal case
+            if j == 0:
+                mEntry['h'] = currLoc
+            elif j >= 3: #Horizontal Exists
+                win_front =  int(grid[i][j-3])
+               # mEntry['zh'] += m[i][j-1]['zh']
+                val = currLoc * m[i][j-1]['h'];
+                if val > maxVal: #and mEntry['zh'] == 0:
+                    maxVal = val
+                mEntry['h'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zh'] -= 1
+                numOpts += 2
+            else:
+                #mEntry['zh'] += m[i][j - 1]['zh']
+                mEntry['h'] = m[i][j-1]['h'] * currLoc
+                numOpts +=1
+
+            #Diagonal back
+            if j ==0 or i == 0:
+                mEntry['db'] = currLoc
+            elif j >= 3 and i >=3:
+                win_front = int(grid[i-3][j - 3])
+                #mEntry['zdb'] += m[i-1][j - 1]['zdb']
+                val = currLoc * m[i-1][j -1]['db'];
+                if val > maxVal: # and mEntry['zdb'] == 0:
+                    maxVal = val
+                mEntry['db'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zdb'] -= 1
+                numOpts += 2
+            else:
+                # mEntry['zdb'] += m[i - 1][j - 1]['zdb']
+                mEntry['db'] = m[i-1][j - 1]['db'] * currLoc
+                numOpts += 1
+
+            #Diagonal forwards
+            if j == 19 or i ==0:
+                mEntry['df'] = currLoc;
+            elif j < 17 and i >= 3:
+                win_front = int(grid[i - 3][j + 3])
+                # mEntry['zdf'] += m[i - 1][j + 1]['zdf']
+                val = currLoc * m[i - 1][j + 1]['df'];
+                if val > maxVal: # and mEntry['zdf'] == 0:
+                    maxVal = val
+                mEntry['df'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zdf'] -= 1
+                numOpts += 2
+            else:
+                # mEntry['zdf'] += m[i - 1][j + 1]['zdf']
+                mEntry['df'] = m[i - 1][j + 1]['df'] * currLoc
+                numOpts += 1
+
+            m[i][j] = mEntry
+
+
+    print("Max Product:" + str(maxVal))
+    print("Took this many  operations:" + str(numOpts))
+    print("")
+
 
 def loadGrid():
     f = open ('Problem11Grid.txt', 'r')
     for line in f:
+        # Replace all 00 with -1.  It allows for division for memoization solution, and because we are looking for a maximum it shouldn't effect the result
+        line = line.replace("00", "01") # Replace with 1 (which wont contribute with an increase) assumes at least one section without a 00 and it should still be correct.
         split_line = line.split();
         grid.append(split_line);
 
