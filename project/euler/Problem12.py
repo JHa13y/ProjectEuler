@@ -75,25 +75,27 @@ def smartest():
     n = 1
     numChecks = 0;
     f3 =0
-    while f3 <= 500:
+    while f3 <= max_divisors:
         factor_count = 0
         f1, ops = countDivisors((n+1)/2)
         numChecks += ops
         f2, ops = countDivisors(n)
         numChecks += ops
         f3 = f1 *f2
+        factor_count = f3
 
 
         f1, ops = countDivisors(n/ 2)
         numChecks += ops
-        f2, ops = countDivisors(n)
+        f2, ops = countDivisors(n+1)
         numChecks += ops
-        if f1 * f2 > 500:
+        if f1 * f2 > max_divisors:
+            factor_count = f1 * f2
             break
         n += 1
 
 
-    number = n * (n + 1) / 2;
+    number = int(n * (n + 1) / 2);
     print("First Number: " + str(number) + " Factor Count: " + str(factor_count))
     print("Took #Ops: " + str(numChecks))
 
