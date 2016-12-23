@@ -25,21 +25,25 @@
 #
 # What is the greatest product of four adjacent numbers in the same direction (up, down, left, right, or diagonally) in the 20×20 grid?
 import timeit
+from random import randint
+import random
+
 grid = []
+dynamicGrid=[]
 
 def main():
     print("Loading Grid")
     loadGrid();
     print("Timing new BruteForce Method:")
     print(timeit.repeat("bruteForce()", "from __main__ import bruteForce", number =1))
-
-    print("Timing memoize Method:")
+    #
+    # print("Timing memoize Method:")
     print(timeit.repeat("memoized()", "from __main__ import memoized", number = 1))
+    testDynamic()
 
 
 def bruteForce():
-    mults = 0;
-    max =0;
+    mults = 0;max =0;
     #print("Check Horizontals")
     for i in range(0, 20):
         for j in range (0, 17):
@@ -49,7 +53,7 @@ def bruteForce():
             if value > max:
                 max = value
 
-    #print("Check Verticles")
+    print("Check Verticles")
     for i in range(0, 17):
         for j in range (0, 20):
             #print("Trying: " +grid[i][j] + " "+ grid[i+1][j] + " " + grid[i+2][j] +" " + grid[i+3][j])
@@ -187,6 +191,183 @@ def loadGrid():
         split_line = line.split();
         grid.append(split_line);
 
+def convertGrid():
+    newGrid =[]
+    for i in range(20):
+        line = []
+        for j in range(20):
+            line.append(int(grid[i][j]))
+        newGrid.append(line)
+    return newGrid
+
+
+def testDynamic():
+    print("SanityTest :")
+    global dynamicGrid
+    dynamicGrid = convertGrid()
+    dynamicBruteForce(4)
+    dynamicMemoize(4)
+
+    print("Testing a dynamically generated grid of size 2500 with a window size of 10")
+    print("generating larger (2500) Grid")
+    generateGrid(2500)
+    print("Timing dynamic BruteForce Method:")
+    print(timeit.repeat("dynamicBruteForce(10)", "from __main__ import dynamicBruteForce", number=1))
+    print("timing dynamic memoize Mehtod:")
+    print(timeit.repeat("dynamicMemoize(10)", "from __main__ import dynamicMemoize", number=1))
+
+def dynamicMemoize(window_size):
+    n = len(dynamicGrid)
+    grid = dynamicGrid
+    # Initalize m table
+    m = [[0] * n for i in range(n)]
+
+    maxVal = 0
+    numOpts = 0
+
+    for i in range(0, n):
+        for j in range(0, n):
+            mEntry = {}
+            currLoc = grid[i][j]
+
+            offset = window_size -1;
+            # vertical case
+            if i == 0:
+                mEntry['v'] = currLoc
+            elif i >= offset:  # Vertical Exists
+                win_front = grid[i - offset][j]
+                val = currLoc * m[i - 1][j]['v']
+                if val > maxVal:
+                    maxVal = val
+                mEntry['v'] = val / win_front
+                numOpts += 2
+            else:
+                mEntry['v'] = m[i - 1][j]['v'] * currLoc
+                numOpts += 1
+
+
+            #horizontal case
+            if j == 0:
+                mEntry['h'] = currLoc
+            elif j >= offset:  # Horizontal Exists
+                win_front = grid[i][j - offset]
+                # mEntry['zh'] += m[i][j-1]['zh']
+                val = currLoc * m[i][j - 1]['h'];
+                if val > maxVal:  # and mEntry['zh'] == 0:
+                    maxVal = val
+                mEntry['h'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zh'] -= 1
+                numOpts += 2
+            else:
+                # mEntry['zh'] += m[i][j - 1]['zh']
+                mEntry['h'] = m[i][j - 1]['h'] * currLoc
+                numOpts += 1
+
+            #Diagonal back
+            if j == 0 or i == 0:
+                mEntry['db'] = currLoc
+            elif j >= offset and i >= offset:
+                win_front = grid[i - offset][j - offset]
+                # mEntry['zdb'] += m[i-1][j - 1]['zdb']
+                val = currLoc * m[i - 1][j - 1]['db'];
+                if val > maxVal:  # and mEntry['zdb'] == 0:
+                    maxVal = val
+                mEntry['db'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zdb'] -= 1
+                numOpts += 2
+            else:
+                # mEntry['zdb'] += m[i - 1][j - 1]['zdb']
+                mEntry['db'] = m[i - 1][j - 1]['db'] * currLoc
+                numOpts += 1
+
+            # Diagonal forwards
+            if j == n -1 or i == 0:
+                mEntry['df'] = currLoc;
+            elif j < n - offset and i >= offset:
+                win_front = grid[i - offset][j + offset]
+                # mEntry['zdf'] += m[i - 1][j + 1]['zdf']
+                val = currLoc * m[i - 1][j + 1]['df'];
+                if val > maxVal:  # and mEntry['zdf'] == 0:
+                    maxVal = val
+                mEntry['df'] = val / win_front
+                # if win_front < 0:
+                #     mEntry['zdf'] -= 1
+                numOpts += 2
+            else:
+                # mEntry['zdf'] += m[i - 1][j + 1]['zdf']
+                mEntry['df'] = m[i - 1][j + 1]['df'] * currLoc
+                numOpts += 1
+
+            m[i][j] = mEntry
+
+    print("Max Product:" + str(maxVal))
+    print("Took this many  operations:" + str(numOpts))
+    print("")
+
+
+def dynamicBruteForce(window_size):
+
+    n = len(dynamicGrid)
+    mults = 0;
+    max = 0;
+    # print("Check Horizontals")
+    for i in range(0, n):
+        for j in range(0, n - window_size + 1):
+            value = dynamicGrid[i][j]
+            for k in range(1, window_size):
+                value *= dynamicGrid[i][j+k]
+                mults += 1
+
+            if value > max:
+                max = value
+
+    # print("Check Verticles")
+    for i in range(0, n - window_size +1):
+        for j in range(0, n):
+            # print("Trying: " +grid[i][j] + " "+ grid[i+1][j] + " " + grid[i+2][j] +" " + grid[i+3][j])
+            value = dynamicGrid[i][j]
+            for k in range(1, window_size):
+                value *= dynamicGrid[i+k][j]
+                mults += 1
+            if value > max:
+                max = value
+
+    # print("Check Diagonal Up")
+    for i in range(window_size-1, n - window_size +1):
+        for j in range(0, n - window_size +1):
+            # print("Trying: " +grid[i][j] + " "+ grid[i-1][j+1] + " " + grid[i-2][j+2] +" " + grid[i-3][j+3])
+            value = dynamicGrid[i][j]
+            for k in range(1, window_size):
+                value *= dynamicGrid[i-k][j+k]
+                mults+=1
+            if value > max:
+                max = value
+
+    # print("Check Diagonal Down")
+    for i in range(0, n - window_size +1):
+        for j in range(0, n - window_size +1):
+            # print("Trying: " +grid[i][j] + " "+ grid[i+1][j+1] + " " + grid[i+2][j+2] +" " + grid[i+3][j+3])
+            value = dynamicGrid[i][j]
+            for k in range(1, window_size):
+                value *= dynamicGrid[i+k][j+k]
+                mults+=1
+
+            if value > max:
+                max = value
+
+    print("Max Product:" + str(max))
+    print("Took this many multiplication operations:" + str(mults))
+    print("")
+
+
+def generateGrid(n):
+    global dynamicGrid
+    dynamicGrid =[]
+
+    for i in range(n):
+        dynamicGrid.append([int(99*random.random())+1 for i in range(n)])
 
 if __name__ == "__main__":
     main()
